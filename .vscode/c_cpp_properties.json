@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/g++",
+            "cStandard": "c11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "${default}",
+            "compilerArgs": [
+                "-I./thirdparty/inlcude/",
+                // "-L./thirdparty/lib/",
+                "-lglad",
+                "-lglfw3",
+                "-lGL",
+                "-lX11",
+                "-lpthread",
+                "-lXrandr",
+                "-lXi",
+                "-ldl"
+            ]
+        }
+    ],
+    "version": 4
+}
