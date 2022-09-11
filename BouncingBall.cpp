@@ -4,9 +4,8 @@
 /* Need to install glad, GLFW, and glm first */
 /* See learnopengl.com for setting up GLFW and glad */
 /* You can just copy the headers from glm, or go through the install */
-
-#include<iostream>
-
+#include <iostream>
+#include <vector>
 /**
  * OpenGL is only really a standard/specification it is up to the driver manufacturer to implement the specification to a 
  * driver that the specific graphics card supports. Since there are many different versions of OpenGL drivers, the location 
@@ -14,17 +13,20 @@
  * the developer to retrieve the location of the functions he/she needs and store them in function pointers for later use. 
  * Retrieving those locations is OS-specific.
  */
+#include <glad/glad.h>   // include GLAD before GLFW
+#include <GLFW/glfw3.h>  // creating window and rendering 
 
-#include<glad/glad.h>   //include GLAD before GLFW
-#include<GLFW/glfw3.h>  // creating window and rendering 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-#include<glm/glm.hpp>
-#include<glm/gtc/matrix_transform.hpp>
-#include<glm/gtc/type_ptr.hpp>
-using namespace std;
+#include "Common.h"
+#include "Logger.h"
+#include "Ball.h"
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const char PROJ_NAME[]          = "Bouncing Ball";
+const unsigned int SCR_WIDTH    = 800;
+const unsigned int SCR_HEIGHT   = 600;
 
 // Hardcoded shaders so we don't need extra files
 const char* vertexShaderSource = "#version 330 core\n"
@@ -48,15 +50,21 @@ const char* fragmentShaderSource = "#version 330 core\n"
 "   FragColor = vec4(ourColor, 1.0f);\n"
 "}\n\0";
 
+// Timestep params
+float t = 0.0;
+const float dt = 1.0 / 30.0;
+
 // View parameters
 float theta = 0.0;
 float phi = 0.0;
 float camradius = 5.0;
-float cameraspeed = 0.02;
+float cameraspeed = 0.3;
 
 float camX = camradius;
 float camY = 0.0;
 float camZ = 0.0;
+
+
 
 // Allow window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -171,27 +179,31 @@ float ball[] = {
       0,  0,-br,   1.0f, 1.0f, 1.0f,
 };
 
-int main() {
+int main(int argc, char* argv[]) {
+    // Init and Configure GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Physically Based Demo", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, PROJ_NAME, NULL, NULL);
     if (window == NULL) {
-        cout << "Failed to create GLFW window" << endl;
+        std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
     }
     glfwMakeContextCurrent(window);
-
+ 
+    // GLAD manages function pointers for OpenGL, so we want to initialize GLAD before we call any OpenGL function
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-        cout << "Failed to initialize GLAD" << endl;
+        std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
 
+    // tell OpenGL the size of the rendering window so OpenGL knows how we want to display the data and coordinates with respect to the window.
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
+    // register a callback function on the window that gets called each time the window is resized.
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // Enable depth buffering, backface culling
@@ -239,8 +251,11 @@ int main() {
     projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-    /* HERE IS INITIAL BALL POSITION, SET AT 0,0,0 FOR DEMO */
-    float ballposition[] = {0.0, 0.0, 0.0};
+
+    Ball ball;
+
+    int output_state_cnt = 0;
+    std::string output_state_string = "";
 
     // Rendering loop0
 	while (!glfwWindowShouldClose(window)) {
@@ -275,8 +290,11 @@ int main() {
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
         // Translate ball to its position and draw
+
+        struct state st = ball.getState();
+
         model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(ballposition[0], ballposition[1], ballposition[2]));
+        model = glm::translate(model, glm::vec3(st.position.x, st.position.y, st.position.z));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glDrawArrays(GL_TRIANGLES, 0, 24);
 
@@ -287,8 +305,11 @@ int main() {
            THE NEXT DISPLAY FRAME (PROBABLY WANT A FUNCTION CALL) */
         // You want to update ballposition, giving the position of the ball
         // For now, we will have a ball that falls by .0002 in z per frame
-        ballposition[2] -= 0.0002;
+        ball.setPosition(0, 0, st.position.z - 0.002);
 
+        if(output_state_cnt++ % 75 == 0) {
+            Logger::log_state(ball.getState());
+        };
 	}
 
     // optional: de-allocate all resources once they've outlived their purpose:
