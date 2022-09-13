@@ -12,6 +12,7 @@
 				"-o",
 				"${fileDirname}/${fileBasenameNoExtension}",
 				"-I./thirdparty/include/",
+				"-I./include/",
 				"-L./thirdparty/lib/",
 				"-lglad",
 				"-lglfw3",

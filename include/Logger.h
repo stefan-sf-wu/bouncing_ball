@@ -1,10 +1,8 @@
-#ifndef Logger_H_
-#define Logger_H_
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
 #include <iostream>
 #include <vector>
-
-namespace Logger {
 
 void log_state(struct state st) {
     std::string c;
@@ -20,6 +18,6 @@ void log_state(struct state st) {
     std::cout << "coordinate: " << c << "; velocity: " << v << std::endl;
 }
 
-} // namespace Logger
 
-#endif // Logger_H_
+
+#endif // LOGGER_H_
