@@ -1,12 +1,23 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
+#define PROJ_NAME "Bouncing Ball"
+
 #define ENABLE_LOGGER true
 
-#define EDGE_SIZE 150       // even numbers
-#define TIMESTEP 10          // millisec
-#define T_MAX 30000            // millisec
-#define DISPLAY_REFRESH_INTERVAL (1.0 / 60.0 * 1000) // 60 HZ in millisec
+#
+
+#define EDGE_SIZE 50          // even numbers
+#define TIMESTEP 100          // millisec
+#define MAX_DISPLAY_TIME 30000           // millisec
+
+#define SCR_WIDTH 800
+#define SCR_HEIGHT 600
+#define DISPLAY_REFRESH_INTERVAL (1.0 / 45.0 * 1000) // 60 HZ in millisec
+
+#define K_BALL_MASS 0.5
+#define K_AIR 0.01
+
 
 struct vec {
     float x;
@@ -20,10 +31,11 @@ struct state {
 };
 
 
-namespace force {
-    const struct vec gravity = {0, 0, -10};
-    const struct vec wind    = {0, 0, 0};
-}
+// force
+const struct vec k_gravity = {0, 0, -10};
+const struct vec k_wind    = {0, 0, 0};
+
+
 
 
 #endif // COMMON_H_

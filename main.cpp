@@ -27,9 +27,6 @@
 #include "Logger.h"
 #include "Ball.h"
 
-const char PROJ_NAME[]          = "Bouncing Ball";
-const unsigned int SCR_WIDTH    = 800;
-const unsigned int SCR_HEIGHT   = 600;
 
 // Hardcoded shaders so we don't need extra files
 const char* vertexShaderSource = "#version 330 core\n"
@@ -58,17 +55,20 @@ const char* fragmentShaderSource = "#version 330 core\n"
 float theta = 0.0;
 float phi = 0.0;
 float camradius = 5.0;
-float cameraspeed = 0.2;
+float cameraspeed = 0.5;
 
 float camX = camradius;
 float camY = 0.0;
 float camZ = 0.0;
 
-// void getTimeLapse(){
-//     auto new_time   = std::chrono::steady_clock::now();
-//     auto frame_time = std::chrono::duration_cast<std::chrono::milliseconds>(new_time - current_time);
-//     std::cout << "frame_time type" << (frame_time).count() << std::endl;
-// }
+struct vec transform_ball_coord(struct vec v) {
+    struct vec ret = {
+        v.x / (EDGE_SIZE / 2),
+        v.y / (EDGE_SIZE / 2),
+        v.z / (EDGE_SIZE / 2)
+    };
+    return ret;
+}
 
 // Allow window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -263,54 +263,19 @@ int main(int argc, char* argv[]) {
 
     // ----------------------------------------------------------------------------------------------------
 
-    Ball ball; ball.reset();
-    Timer timer; timer.reset();
+    Ball ball;      ball.reset();
+    Timer timer;    timer.reset();
 
-    struct state ball_state = ball.getState();
-    int direction = -1;
+    struct vec ball_position, ball_position_new;
+    ball_position = transform_ball_coord(ball.getState().position);
     
 
-    /* ----------------------------------------------------------------------------------------------------
-     * RENDER
-     */
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    // Set view matrix
-    view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    // render the box
-    glBindBuffer(GL_ARRAY_BUFFER, boxbuffer);
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // draw the box (no model transform needed)
-    model = glm::mat4(1.0f);
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    // render the ball
-    glBindBuffer(GL_ARRAY_BUFFER, ballbuffer);
-    // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    // Translate ball to its position and draw
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(ball_state.position.x, ball_state.position.y, ball_state.position.z));
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-    glDrawArrays(GL_TRIANGLES, 0, 24);
-    glfwSwapBuffers(window);
-    // ----------------------------------------------------------------------------------------------------
     // Rendering loop0
 	while (!glfwWindowShouldClose(window) && !timer.is_time_to_stop()) {
 		processInput(window);
         if (timer.is_time_to_draw()) {
             timer.update_next_display_time();
-            ball_state = ball.getState();
+            ball_position = transform_ball_coord(ball.getState().position);
             /* ----------------------------------------------------------------------------------------------------
              * RENDER
              */
@@ -341,7 +306,7 @@ int main(int argc, char* argv[]) {
             glEnableVertexAttribArray(1);
             // Translate ball to its position and draw
             model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(ball_state.position.x, ball_state.position.y, ball_state.position.z));
+            model = glm::translate(model, glm::vec3(ball_position.x, ball_position.y, ball_position.z));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 24);
             // swap the color buffer (a large 2D buffer that contains color values for each pixel in GLFW's window) 
@@ -367,19 +332,13 @@ int main(int argc, char* argv[]) {
          * TIME HOLDER
          * : if t (calc speed) > actual_time_lapse (real time), hold for a while. (when timestep is relatively large)
          */
-
-        ball.set_position(0, 0, ball_state.position.z + 0.01 * direction);
+        ball_position = ball.getState().position;
+        if (n % 10 == 0) ball.set_position(0, 0, ball_position.z - 3);
         
         
-        if(ENABLE_LOGGER && n % 100 == 0) {
-            timer.logger();
-            if(direction == 1) {
-                direction = -1;
-            } else {
-                direction = 1;
-            }
-
-            log_state(ball.getState());
+        if(ENABLE_LOGGER && n % 10 == 0) {
+            // timer.logger();
+            ball.logger();
         }
 	}
 

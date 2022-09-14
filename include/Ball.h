@@ -2,19 +2,13 @@
 #define BALL_H_
 
 #include <vector>
+#include <iomanip>
 
 #include "Common.h"
 
 class Ball {
   private:
     struct state state_;
-
-  private:
-    // inline bool isAbnormalPosition(float x, float y, float z) {
-    //     return (x < -EDGE_SIZE || x > EDGE_SIZE ||
-    //             y < -EDGE_SIZE || y > EDGE_SIZE ||
-    //             z < -EDGE_SIZE || z > EDGE_SIZE);
-    // }
 
   public:
     Ball();
@@ -30,9 +24,6 @@ class Ball {
     }
 
     void set_position(float x, float y, float z) {
-        // if (isAbnormalPosition(x, y, z)) {
-        //     std::cout << "error: given postion is outside the box.\n";
-        // }
         state_.position = {x, y, z};
     }
 
@@ -40,6 +31,20 @@ class Ball {
         state_.velocity = {x, y, z};
     }
 
+#ifdef ENABLE_LOGGER
+    void logger() {
+        std::cout << std::setw(10) << "[ball] ";
+        std::cout << "position: ["
+                      << state_.position.x << ' '
+                      << state_.position.y << ' ' 
+                      << state_.position.z << "] ";
+        std::cout << "velocity: ["
+                      << state_.velocity.x << ' '
+                      << state_.velocity.y << ' ' 
+                      << state_.velocity.z << "] ";
+        std::cout << std::endl;
+    }
+#endif
 };
 
 Ball::Ball() {
