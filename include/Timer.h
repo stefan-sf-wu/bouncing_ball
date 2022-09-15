@@ -21,12 +21,12 @@ class Timer
 
     bool no_need_to_calibrate_;
     int  no_need_to_calibrate_cnt_;
-    int  no_need_to_calibrate_limit_ = 100;
+    const int  k_no_need_to_calibrate_limit_ = 100;
 
   private:
     void test_no_need_to_calibrate(long n) {
         if(n < 0) {
-            if(no_need_to_calibrate_cnt_++ > no_need_to_calibrate_limit_) {
+            if(no_need_to_calibrate_cnt_++ > k_no_need_to_calibrate_limit_) {
                 no_need_to_calibrate_ = true;
             }
         }
@@ -37,10 +37,10 @@ class Timer
     ~Timer();
 
     void reset() {
-        timestep_               = TIMESTEP;
-        simulation_time_        = 0;
-        next_display_time_      = simulation_time_;
-        real_time_offset_       = std::chrono::steady_clock::now();
+        timestep_                 = TIMESTEP;
+        simulation_time_          = 0;
+        next_display_time_        = simulation_time_;
+        real_time_offset_         = std::chrono::steady_clock::now();
 
         no_need_to_calibrate_     = false;
         no_need_to_calibrate_cnt_ = 0;
@@ -77,8 +77,7 @@ class Timer
 #ifdef ENABLE_LOGGER
     void logger() {
         std::cout << std::setw(10) << "[timer] ";
-        std::cout << "[simulation_time: " << simulation_time_ << "] ";
-        std::cout << "[next_display_time: " << next_display_time_ << "] ";
+        std::cout << "simulation_time: " << simulation_time_ << " | next_display_time: " << next_display_time_;
     }
 #endif
 };

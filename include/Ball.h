@@ -15,7 +15,7 @@ class Ball {
     ~Ball();
 
     void reset() {
-        state_.position = {0.0, 0.0, 0.0};
+        state_.position = {EDGE_SIZE / 2, EDGE_SIZE / 2, EDGE_SIZE - 1};
         state_.velocity = {0.0, 0.0, 0.0};
     }
     
@@ -23,13 +23,34 @@ class Ball {
         return state_;
     }
 
-    void set_position(float x, float y, float z) {
+    void set_state(struct state st) {
+        state_ = st;
+    }
+
+    void set_position(double x, double y, double z) {
         state_.position = {x, y, z};
     }
 
-    void set_velocity(float x, float y, float z) {
+    void set_position(struct vec v) {
+        state_.position = v;
+    }
+
+    void set_velocity(double x, double y, double z) {
         state_.velocity = {x, y, z};
     }
+
+    void set_velocity(struct vec v) {
+        state_.velocity = v;
+    }
+    
+    struct vec get_transformed_postion_for_render() {
+        return {
+            ((state_.position.x * 2) / EDGE_SIZE) - 1,
+            ((state_.position.y * 2) / EDGE_SIZE) - 1,
+            ((state_.position.z * 2) / EDGE_SIZE) - 1
+        };
+    }
+
 
 #ifdef ENABLE_LOGGER
     void logger() {

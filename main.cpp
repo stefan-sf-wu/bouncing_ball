@@ -24,9 +24,8 @@
 
 #include "Common.h"
 #include "Timer.h"
-#include "Logger.h"
 #include "Ball.h"
-
+#include "Collision_Handler.h"
 
 // Hardcoded shaders so we don't need extra files
 const char* vertexShaderSource = "#version 330 core\n"
@@ -60,15 +59,6 @@ float cameraspeed = 0.5;
 float camX = camradius;
 float camY = 0.0;
 float camZ = 0.0;
-
-struct vec transform_ball_coord(struct vec v) {
-    struct vec ret = {
-        v.x / (EDGE_SIZE / 2),
-        v.y / (EDGE_SIZE / 2),
-        v.z / (EDGE_SIZE / 2)
-    };
-    return ret;
-}
 
 // Allow window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -259,23 +249,27 @@ int main(int argc, char* argv[]) {
     /* ---------------------------------------------------------------------------------------------------
      * PARAMS FOR LOOPING
      */
-    int  n                     = 0;
-
+    int  n = 0;
+    double fraction;
     // ----------------------------------------------------------------------------------------------------
 
-    Ball ball;      ball.reset();
-    Timer timer;    timer.reset();
-
-    struct vec ball_position, ball_position_new;
-    ball_position = transform_ball_coord(ball.getState().position);
+    Ball  ball;     
+    Timer timer;    
+    Collision_Handler collision_handler; 
+    ball.reset();
+    timer.reset();
+    collision_handler.reset();
     
+    struct state ball_state;
+    struct state ball_state_new;
+    struct vec   transformed_position;
 
     // Rendering loop0
 	while (!glfwWindowShouldClose(window) && !timer.is_time_to_stop()) {
 		processInput(window);
         if (timer.is_time_to_draw()) {
             timer.update_next_display_time();
-            ball_position = transform_ball_coord(ball.getState().position);
+            transformed_position = ball.get_transformed_postion_for_render();
             /* ----------------------------------------------------------------------------------------------------
              * RENDER
              */
@@ -306,7 +300,7 @@ int main(int argc, char* argv[]) {
             glEnableVertexAttribArray(1);
             // Translate ball to its position and draw
             model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(ball_position.x, ball_position.y, ball_position.z));
+            model = glm::translate(model, glm::vec3(transformed_position.x, transformed_position.y, transformed_position.z));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
             glDrawArrays(GL_TRIANGLES, 0, 24);
             // swap the color buffer (a large 2D buffer that contains color values for each pixel in GLFW's window) 
@@ -323,21 +317,51 @@ int main(int argc, char* argv[]) {
         // You want to update ballposition, giving the position of the ball
         // For now, we will have a ball that falls by .0002 in z per frame
         // ball.setPosition(0, 0, st.position.z - 0.002);
+        
+        ball_state = ball.getState();
+
+        ball_state_new.velocity = {
+            ball_state.velocity.x + k_gravity.x * (TIMESTEP / 1000),
+            ball_state.velocity.y + k_gravity.y * (TIMESTEP / 1000),
+            ball_state.velocity.z + k_gravity.z * (TIMESTEP / 1000)
+        };
+        
+        ball_state_new.position = {
+            ball_state.position.x + ball_state_new.velocity.x * (TIMESTEP / 1000),
+            ball_state.position.y + ball_state_new.velocity.y * (TIMESTEP / 1000),
+            ball_state.position.z + ball_state_new.velocity.z * (TIMESTEP / 1000)
+        };
+
+
+        if (collision_handler.detect_collision(&ball_state.position, &ball_state_new.position)) {
+            fraction = collision_handler.get_timestep_fraction();
+            /**
+             * TODO: DO ABSTACTION LATER
+             */ 
+            ball_state_new.velocity = {
+                ball_state.velocity.x + fraction * k_gravity.x * (TIMESTEP / 1000),
+                ball_state.velocity.y + fraction * k_gravity.y * (TIMESTEP / 1000),
+                ball_state.velocity.z + fraction * k_gravity.z * (TIMESTEP / 1000)
+            };
+            
+            ball_state_new.position = {
+                ball_state.position.x + fraction * ball_state_new.velocity.x * (TIMESTEP / 1000),
+                ball_state.position.y + fraction * ball_state_new.velocity.y * (TIMESTEP / 1000),
+                ball_state.position.z + fraction * ball_state_new.velocity.z * (TIMESTEP / 1000)
+            };
+
+
+            timer.update_simulation_time(fraction * TIMESTEP);
+        } else {
+            timer.update_simulation_time(TIMESTEP);
+        }
+        
+        ball.set_state(ball_state_new);
+        timer.calibrate_time();
 
         n++;
-
-        timer.calibrate_time();
-        timer.update_simulation_time(TIMESTEP);
-        /**
-         * TIME HOLDER
-         * : if t (calc speed) > actual_time_lapse (real time), hold for a while. (when timestep is relatively large)
-         */
-        ball_position = ball.getState().position;
-        if (n % 10 == 0) ball.set_position(0, 0, ball_position.z - 3);
-        
-        
         if(ENABLE_LOGGER && n % 10 == 0) {
-            // timer.logger();
+            timer.logger(); 
             ball.logger();
         }
 	}
