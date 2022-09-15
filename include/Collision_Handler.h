@@ -12,6 +12,7 @@ class Collision_Handler {
     struct vec   point_on_plain_[6];
     double distance_curr_;
     double distance_next_;
+    int    idx_collision_plain_;
 
     double calculate_signed_distance(int idx, struct vec *position) {
         struct vec v = {
@@ -19,12 +20,7 @@ class Collision_Handler {
             position->y - point_on_plain_[idx].y,
             position->z - point_on_plain_[idx].z
         };
-        struct vec n = {
-            plain_[idx].a, 
-            plain_[idx].b, 
-            plain_[idx].c
-        };
-        return vec_dot_product(n, v);
+        return vec_dot_product(plain_[idx].get_unit_normal(), v);
     }
 
   public:
@@ -52,6 +48,7 @@ class Collision_Handler {
             distance_curr_ = calculate_signed_distance(i, position_curr);
             distance_next_ = calculate_signed_distance(i, position_next);
             if (std::signbit(distance_curr_) != std::signbit(distance_next_)) {
+                idx_collision_plain_ = i;
                 return true;
             }
         }
@@ -60,6 +57,29 @@ class Collision_Handler {
 
     double get_timestep_fraction() {
         return distance_curr_ / (distance_curr_ - distance_next_);
+    }
+
+    struct vec get_collision_response(struct vec v_collision) {
+        struct vec p_normal = plain_[idx_collision_plain_].get_unit_normal();
+
+        struct vec v_in_normal      = vec_multiply(p_normal, 
+                                                   vec_dot_product(v_collision, p_normal));
+        struct vec v_in_tangential  = vec_substract(v_collision, v_in_normal);
+        struct vec v_out_normal     = vec_multiply(v_in_normal, -k_restitution_coef);
+
+
+
+        struct vec v_out_tangential = vec_substract(v_in_tangential, 
+                                                    vec_multiply(vec_get_unit(v_in_tangential), 
+                                                                 std::min(k_friction_coef * vec_get_sqrt(v_in_normal), 
+                                                                          vec_get_sqrt(v_in_tangential))));   
+#ifdef ENABLE_LOGGER
+        std::cout << "v_in_normal: [" << v_in_normal.x << ' ' <<  v_in_normal.y << ' ' << v_in_normal.z << "]\n";
+        std::cout << "v_in_tangential: [" << v_in_tangential.x << ' ' <<  v_in_tangential.y << ' ' << v_in_tangential.z << "]\n";
+        std::cout << "v_out_normal: [" << v_out_normal.x << ' ' <<  v_out_normal.y << ' ' << v_out_normal.z << "]\n";
+        std::cout << "v_out_tangential: [" << v_out_tangential.x << ' ' <<  v_out_tangential.y << ' ' << v_out_tangential.z << "]\n";     
+#endif                                        
+        return vec_add(v_out_normal, v_out_tangential);
     }
 };
 

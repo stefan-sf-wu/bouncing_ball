@@ -343,15 +343,14 @@ int main(int argc, char* argv[]) {
                 ball_state.velocity.y + fraction * k_gravity.y * (TIMESTEP / 1000),
                 ball_state.velocity.z + fraction * k_gravity.z * (TIMESTEP / 1000)
             };
-            
             ball_state_new.position = {
                 ball_state.position.x + fraction * ball_state_new.velocity.x * (TIMESTEP / 1000),
                 ball_state.position.y + fraction * ball_state_new.velocity.y * (TIMESTEP / 1000),
                 ball_state.position.z + fraction * ball_state_new.velocity.z * (TIMESTEP / 1000)
             };
 
-
-            timer.update_simulation_time(fraction * TIMESTEP);
+            ball_state_new.velocity = collision_handler.get_collision_response(ball_state_new.velocity);
+            timer.update_simulation_time(fraction * TIMESTEP);  // simulation_time_ is long type, (fraction * TIMESTEP) will be rounded
         } else {
             timer.update_simulation_time(TIMESTEP);
         }
