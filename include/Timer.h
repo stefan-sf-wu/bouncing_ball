@@ -74,7 +74,7 @@ class Timer
         return (simulation_time_ >= MAX_DISPLAY_TIME);
     }
 
-#ifdef ENABLE_LOGGER
+#if ENABLE_LOGGER
     void logger() {
         std::cout << std::setw(10) << "[timer] ";
         std::cout << "simulation_time: " << simulation_time_ << " | next_display_time: " << next_display_time_;

@@ -28,7 +28,7 @@ class Collision_Handler {
     ~Collision_Handler();
 
     void reset() {
-        plain_[0] = {1, 0, 0, 0};          // BACK
+        plain_[0] = {1, 0, 0, 0};           // BACK
         plain_[1] = {0, 1, 0, 0};           // LEFT
         plain_[2] = {0, 0, 1, 0};           // BOTTOM
         plain_[3] = {1, 0, 0, -EDGE_SIZE};  // FRONT
@@ -67,13 +67,15 @@ class Collision_Handler {
         struct vec v_in_tangential  = vec_substract(v_collision, v_in_normal);
         struct vec v_out_normal     = vec_multiply(v_in_normal, -k_restitution_coef);
 
+        struct vec v_out_tangential = vec_multiply(v_in_tangential, (1 - k_simplified_friction_coef));
 
-
+/*
         struct vec v_out_tangential = vec_substract(v_in_tangential, 
                                                     vec_multiply(vec_get_unit(v_in_tangential), 
                                                                  std::min(k_friction_coef * vec_get_sqrt(v_in_normal), 
                                                                           vec_get_sqrt(v_in_tangential))));   
-#ifdef ENABLE_LOGGER
+                            */
+#if ENABLE_LOGGER
         std::cout << "v_in_normal: [" << v_in_normal.x << ' ' <<  v_in_normal.y << ' ' << v_in_normal.z << "]\n";
         std::cout << "v_in_tangential: [" << v_in_tangential.x << ' ' <<  v_in_tangential.y << ' ' << v_in_tangential.z << "]\n";
         std::cout << "v_out_normal: [" << v_out_normal.x << ' ' <<  v_out_normal.y << ' ' << v_out_normal.z << "]\n";
@@ -81,7 +83,7 @@ class Collision_Handler {
 #endif                                        
         return vec_add(v_out_normal, v_out_tangential);
     }
-};
+ };
 
 Collision_Handler::Collision_Handler() {}
 Collision_Handler::~Collision_Handler() {}

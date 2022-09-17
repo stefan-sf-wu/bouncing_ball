@@ -319,37 +319,43 @@ int main(int argc, char* argv[]) {
         // ball.setPosition(0, 0, st.position.z - 0.002);
         
         ball_state = ball.getState();
+        double timestep_in_sec = (TIMESTEP / 1000);
+        double airres_acceleration = k_airres_coef / BALL_MASS;
+
 
         ball_state_new.velocity = {
-            ball_state.velocity.x + k_gravity.x * (TIMESTEP / 1000),
-            ball_state.velocity.y + k_gravity.y * (TIMESTEP / 1000),
-            ball_state.velocity.z + k_gravity.z * (TIMESTEP / 1000)
+            ball_state.velocity.x + (k_gravity.x - (k_wind_velocity.x - ball_state.velocity.x) * airres_acceleration) * timestep_in_sec,
+            ball_state.velocity.y + (k_gravity.y - (k_wind_velocity.y - ball_state.velocity.y) * airres_acceleration) * timestep_in_sec,
+            ball_state.velocity.z + (k_gravity.z - (k_wind_velocity.z - ball_state.velocity.z) * airres_acceleration) * timestep_in_sec
         };
         
         ball_state_new.position = {
-            ball_state.position.x + ball_state_new.velocity.x * (TIMESTEP / 1000),
-            ball_state.position.y + ball_state_new.velocity.y * (TIMESTEP / 1000),
-            ball_state.position.z + ball_state_new.velocity.z * (TIMESTEP / 1000)
+            ball_state.position.x + ball_state_new.velocity.x * timestep_in_sec,
+            ball_state.position.y + ball_state_new.velocity.y * timestep_in_sec,
+            ball_state.position.z + ball_state_new.velocity.z * timestep_in_sec
         };
 
 
         if (collision_handler.detect_collision(&ball_state.position, &ball_state_new.position)) {
             fraction = collision_handler.get_timestep_fraction();
+            double fractional_timestep_in_sec = fraction * timestep_in_sec;
             /**
-             * TODO: DO ABSTACTION LATER
+             * TODO: BUILD A FORCE CLASS
              */ 
             ball_state_new.velocity = {
-                ball_state.velocity.x + fraction * k_gravity.x * (TIMESTEP / 1000),
-                ball_state.velocity.y + fraction * k_gravity.y * (TIMESTEP / 1000),
-                ball_state.velocity.z + fraction * k_gravity.z * (TIMESTEP / 1000)
+                ball_state.velocity.x + fractional_timestep_in_sec * (k_gravity.x - (k_wind_velocity.x - ball_state.velocity.x) * airres_acceleration),
+                ball_state.velocity.y + fractional_timestep_in_sec * (k_gravity.y - (k_wind_velocity.y - ball_state.velocity.y) * airres_acceleration),
+                ball_state.velocity.z + fractional_timestep_in_sec * (k_gravity.z - (k_wind_velocity.z - ball_state.velocity.z) * airres_acceleration)
             };
+
             ball_state_new.position = {
-                ball_state.position.x + fraction * ball_state_new.velocity.x * (TIMESTEP / 1000),
-                ball_state.position.y + fraction * ball_state_new.velocity.y * (TIMESTEP / 1000),
-                ball_state.position.z + fraction * ball_state_new.velocity.z * (TIMESTEP / 1000)
+                ball_state.position.x + fractional_timestep_in_sec * ball_state_new.velocity.x,
+                ball_state.position.y + fractional_timestep_in_sec * ball_state_new.velocity.y,
+                ball_state.position.z + fractional_timestep_in_sec * ball_state_new.velocity.z 
             };
 
             ball_state_new.velocity = collision_handler.get_collision_response(ball_state_new.velocity);
+
             timer.update_simulation_time(fraction * TIMESTEP);  // simulation_time_ is long type, (fraction * TIMESTEP) will be rounded
         } else {
             timer.update_simulation_time(TIMESTEP);
@@ -358,11 +364,12 @@ int main(int argc, char* argv[]) {
         ball.set_state(ball_state_new);
         timer.calibrate_time();
 
-        n++;
-        if(ENABLE_LOGGER && n % 10 == 0) {
+#if ENABLE_LOGGER
+        if(ENABLE_LOGGER && n++ % 10 == 0) {
             timer.logger(); 
             ball.logger();
         }
+#endif
 	}
 
     // optional: de-allocate all resources once they've outlived their purpose:

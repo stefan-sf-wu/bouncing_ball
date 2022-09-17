@@ -15,8 +15,8 @@ class Ball {
     ~Ball();
 
     void reset() {
-        state_.position = {EDGE_SIZE / 2, EDGE_SIZE / 2, EDGE_SIZE - 1};
-        state_.velocity = {0.0, 0.0, 0.0};
+        state_.position = {EDGE_SIZE / 2, EDGE_SIZE / 2, EDGE_SIZE * 3/4};
+        state_.velocity = {20,  -20, 0};
     }
     
     struct state getState() {
@@ -52,7 +52,7 @@ class Ball {
     }
 
 
-#ifdef ENABLE_LOGGER
+#if ENABLE_LOGGER
     void logger() {
         std::cout << std::setw(10) << "[ball] ";
         std::cout << "position: ["
