@@ -7,7 +7,7 @@
 /**
  * OBJECT PARAMS
  */ 
-#define EDGE_SIZE 24.0         // even numbers
+#define EDGE_SIZE 24.0         
 #define BALL_MASS 0.5   //kg
 
 /**
