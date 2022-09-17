@@ -1,0 +1,1 @@
+3d bouncing ball in box: tamu csce 649 physically-based modeling. implemented in cpp with OpenGL.
